@@ -310,6 +310,9 @@ table inet fw4 {
 {%   for (let redirect in fw4.redirects(`dstnat_${zone.name}`)): %}
 		{%+ include("redirect.uc", { fw4, redirect }) %}
 {%   endfor %}
+{%   if (zone.fullcone): %}
+		{%+ include("zone-fullcone.uc", { fw4, zone, direction: "dstnat" }) %}
+{%   endif %}
 {%   fw4.includes('chain-append', `dstnat_${zone.name}`) %}
 	}
 
@@ -320,19 +323,22 @@ table inet fw4 {
 {%   for (let redirect in fw4.redirects(`srcnat_${zone.name}`)): %}
 		{%+ include("redirect.uc", { fw4, redirect }) %}
 {%   endfor %}
-{%   if (zone.masq): %}
+{%   if (zone.masq && !zone.fullcone): %}
 {%    for (let saddrs in zone.masq4_src_subnets): %}
 {%     for (let daddrs in zone.masq4_dest_subnets): %}
 		{%+ include("zone-masq.uc", { fw4, zone, family: 4, saddrs, daddrs }) %}
 {%     endfor %}
 {%    endfor %}
 {%   endif %}
-{%   if (zone.masq6): %}
+{%   if (zone.masq6 && !zone.fullcone): %}
 {%    for (let saddrs in zone.masq6_src_subnets): %}
 {%     for (let daddrs in zone.masq6_dest_subnets): %}
 		{%+ include("zone-masq.uc", { fw4, zone, family: 6, saddrs, daddrs }) %}
 {%     endfor %}
 {%    endfor %}
+{%   endif %}
+{%   if (zone.fullcone): %}
+		{%+ include("zone-fullcone.uc", { fw4, zone, direction: "srcnat" }) %}
 {%   endif %}
 {%   fw4.includes('chain-append', `srcnat_${zone.name}`) %}
 	}
